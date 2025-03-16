@@ -5,13 +5,13 @@
 #include "mfkey.h"
 #include <nfc/helpers/nfc_util.h>
 #include <nfc/protocols/mf_classic/mf_classic.h>
+#include "utils.h"
 
 #define LF_POLY_ODD  (0x29CE5C)
 #define LF_POLY_EVEN (0x870804)
-#define BIT(x, n)    ((x) >> (n) & 1)
-#define BEBIT(x, n)  BIT(x, (n) ^ 24)
-#define SWAPENDIAN(x) \
-    ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
+//#define BIT(x, n)    ((x) >> (n) & 1)
+//#define BEBIT(x, n)  BIT(x, (n) ^ 24)
+//#define SWAPENDIAN(x) ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
 
 static inline uint32_t prng_successor(uint32_t x, uint32_t n);
 static inline int filter(uint32_t const x);

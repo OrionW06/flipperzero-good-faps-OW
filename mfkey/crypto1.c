@@ -5,7 +5,7 @@
 #include "crypto1.h"
 #include "mfkey.h"
 
-#define BIT(x, n) ((x) >> (n) & 1)
+//#define BIT(x, n) ((x) >> (n) & 1)
 
 void crypto1_get_lfsr(struct Crypto1State* state, MfClassicKey* lfsr) {
     int i;

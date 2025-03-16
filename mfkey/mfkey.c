@@ -19,7 +19,7 @@
 #include <gui/gui.h>
 #include <gui/elements.h>
 #include "mfkey_icons.h"
-#include <inttypes.h>
+//#include <inttypes.h>
 #include <toolbox/keys_dict.h>
 #include <bit_lib/bit_lib.h>
 #include <toolbox/stream/buffered_file_stream.h>
@@ -41,20 +41,21 @@
 #define MAX_NAME_LEN          32
 #define MAX_PATH_LEN          64
 
-#define LF_POLY_ODD  (0x29CE5C)
+#define LF_POLY_ODD  (0x29CE5C) // magic values...
 #define LF_POLY_EVEN (0x870804)
-#define CONST_M1_1   (LF_POLY_EVEN << 1 | 1)
-#define CONST_M2_1   (LF_POLY_ODD << 1)
-#define CONST_M1_2   (LF_POLY_ODD)
-#define CONST_M2_2   (LF_POLY_EVEN << 1 | 1)
-#define BIT(x, n)    ((x) >> (n) & 1)
-#define BEBIT(x, n)  BIT(x, (n) ^ 24)
-#define SWAPENDIAN(x) \
-    ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
+
+#define CONST_M1_1 (LF_POLY_EVEN << 1 | 1)
+#define CONST_M2_1 (LF_POLY_ODD << 1)
+#define CONST_M1_2 (LF_POLY_ODD)
+#define CONST_M2_2 (LF_POLY_EVEN << 1 | 1)
+//#define BIT(x, n)   ((x) >> (n) & 1)
+//#define BEBIT(x, n) BIT(x, (n) ^ 24)
+//#define SWAPENDIAN(x) ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
 //#define SIZEOF(arr) sizeof(arr) / sizeof(*arr)
 
-static int eta_round_time = 44;
-static int eta_total_time = 705;
+static int eta_round_time = 44; // Why the magic numbers???
+static int eta_total_time = 705; // Noproto explain!!
+
 // MSB_LIMIT: Chunk size (out of 256)
 static int MSB_LIMIT = 16;
 
@@ -160,35 +161,66 @@ int binsearch(unsigned int data[], int start, int stop) {
     }
     return start;
 }
+
+// here is some magic!
 void quicksort(unsigned int array[], int low, int high) {
-    //if (SIZEOF(array) == 0)
-    //    return;
-    if(low >= high) return;
-    int middle = low + (high - low) / 2;
-    unsigned int pivot = array[middle];
-    int i = low, j = high;
-    while(i <= j) {
-        while(array[i] < pivot) {
-            i++;
+// Iterative implementation with explicit stack to avoid recursion overhead
+#define STACK_SIZE 32 // Enough for arrays up to 2^32 elements
+    int stack[STACK_SIZE];
+    int top = -1;
+
+    // Push initial values
+    stack[++top] = low;
+    stack[++top] = high;
+
+    while(top >= 0) {
+        // Pop high and low
+        high = stack[top--];
+        low = stack[top--];
+
+        // Handle small arrays with insertion sort - faster for small chunks
+        if(high - low <= INSERTION_SORT_THRESHOLD) {
+            INSERTION_SORT(array, low, high);
+            continue;
         }
-        while(array[j] > pivot) {
-            j--;
+
+        // Get pivot index using median-of-three and partition the array
+        int pivot_index = GET_PIVOT_INDEX(array, low, high);
+        int partition_index = PARTITION(array, low, high, pivot_index);
+
+        // Add prefetching for better memory access patterns
+        PREFETCH(&array[low]);
+        PREFETCH(&array[partition_index]);
+        PREFETCH(&array[high]);
+
+        // Only push larger partition, process smaller one first
+        // This minimizes stack usage
+        if(partition_index - low < high - partition_index) {
+            // Push larger sub-array
+            if(partition_index + 1 < high) {
+                stack[++top] = partition_index + 1;
+                stack[++top] = high;
+            }
+            // Process smaller sub-array next
+            if(low < partition_index - 1) {
+                stack[++top] = low;
+                stack[++top] = partition_index - 1;
+            }
+        } else {
+            // Push larger sub-array
+            if(low < partition_index - 1) {
+                stack[++top] = low;
+                stack[++top] = partition_index - 1;
+            }
+            // Process smaller sub-array next
+            if(partition_index + 1 < high) {
+                stack[++top] = partition_index + 1;
+                stack[++top] = high;
+            }
         }
-        if(i <= j) { // swap
-            int temp = array[i];
-            array[i] = array[j];
-            array[j] = temp;
-            i++;
-            j--;
-        }
-    }
-    if(low < j) {
-        quicksort(array, low, j);
-    }
-    if(high > i) {
-        quicksort(array, i, high);
     }
 }
+
 int extend_table(unsigned int data[], int tbl, int end, int bit, int m1, int m2, unsigned int in) {
     in <<= 24;
     for(data[tbl] <<= 1; tbl <= end; data[++tbl] <<= 1) {
@@ -699,7 +731,8 @@ void mfkey(ProgramState* program_state) {
     //FURI_LOG_I(TAG, "Unique keys found:");
     for(i = 0; i < keyarray_size; i++) {
         //FURI_LOG_I(TAG, "%012" PRIx64, keyarray[i]);
-        keys_dict_add_key(user_dict, keyarray[i].data, sizeof(MfClassicKey));
+        //FIND MY ASS
+        //keys_dict_add_key(user_dict, keyarray[i].data, sizeof(MfClassicKey));
     }
     if(keyarray_size > 0) {
         dolphin_deed(DolphinDeedNfcMfcAdd);

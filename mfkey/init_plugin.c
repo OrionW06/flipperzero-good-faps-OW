@@ -23,10 +23,9 @@
 #define CONST_M2_1   (LF_POLY_ODD << 1)
 #define CONST_M1_2   (LF_POLY_ODD)
 #define CONST_M2_2   (LF_POLY_EVEN << 1 | 1)
-#define BIT(x, n)    ((x) >> (n) & 1)
-#define BEBIT(x, n)  BIT(x, (n) ^ 24)
-#define SWAPENDIAN(x) \
-    ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
+//#define BIT(x, n)    ((x) >> (n) & 1)
+//#define BEBIT(x, n)  BIT(x, (n) ^ 24)
+//#define SWAPENDIAN(x) ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
 
 bool key_already_found_for_nonce_in_dict(KeysDict* dict, MfClassicNonce* nonce) {
     // This function must not be passed the CUID dictionary
