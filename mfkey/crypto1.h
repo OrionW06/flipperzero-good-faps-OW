@@ -83,11 +83,20 @@ static inline uint8_t evenparity32(uint32_t x) {
 }
 #endif
 
-static inline void update_contribution(unsigned int data[], int item, int mask1, int mask2) {
-    int p = data[item] >> 25;
-    p = p << 1 | evenparity32(data[item] & mask1);
-    p = p << 1 | evenparity32(data[item] & mask2);
-    data[item] = p << 24 | (data[item] & 0xffffff);
+static inline void __attribute__((always_inline))
+update_contribution(unsigned int data[], int item, int mask1, int mask2) {
+    uint32_t value = data[item];
+    uint32_t p = value >> 25;
+
+    // Calculate parities using the existing efficient function
+    uint32_t parity1 = evenparity32(value & mask1);
+    uint32_t parity2 = evenparity32(value & mask2);
+
+    // Combine results in one operation
+    p = (p << 2) | (parity1 << 1) | parity2;
+
+    // Preserve lower 24 bits and set upper 8 bits in one operation
+    data[item] = (p << 24) | (value & 0xffffff);
 }
 
 static inline uint32_t crypt_word(struct Crypto1State* s) {
